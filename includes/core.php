@@ -574,7 +574,7 @@ function timetracker_admin_css() {
 add_action('wp_dashboard_setup', 'cm_custom_dashboard_widgets');
 function cm_custom_dashboard_widgets() {
     global $wp_meta_boxes;
-    wp_add_dashboard_widget('cm_summary_widget', 'Annual Billing Summary', 'cm_summary_callback');
+    wp_add_dashboard_widget('cm_summary_widget', 'Client Manager Annual Billing Summary', 'cm_summary_callback');
 }
  
 function cm_summary_callback() {
