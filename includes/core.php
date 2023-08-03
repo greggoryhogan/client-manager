@@ -564,7 +564,8 @@ function timetracker_admin_css() {
             grid-template-columns: 1fr auto;
         }
         .client-summary-widget div {margin-bottom: 3px;}
-        .total {border-top: 1px solid #000; font-weight: bold;padding-top: 5px;margin-top:2px;}
+        .client-summary-widget .total {border-top: 1px solid #000; font-weight: bold;padding-top: 5px;margin-top:2px;}
+        .client-summary-widget .sub-item {padding-left: 10px;}
     </style>';
 }
 
@@ -596,6 +597,7 @@ function cm_monthly_summary_callback() {
                 $access = get_post_meta($post_id,'client_category_access');
                 $rate = get_post_meta($post_id,'client_rate', true);
                 if(!empty($access)) {
+                    $has_children = false;
                     $args = array(
                         'post_type' => 'tribe_events',
                         'posts_per_page' => -1,
@@ -616,22 +618,49 @@ function cm_monthly_summary_callback() {
                     );
                     $the_query = new WP_Query($args);
                     if($the_query->have_posts()) {
+                        if(is_array($access)) {
+                            foreach($access as $access_item) {
+                                $term = get_term_by('name',$access_item,'tribe_events_cat');
+                                ${$term->slug} = 0;
+                            }
+                        }
                         $count = $the_query->found_posts;
                         $total = 0;
                         while($the_query->have_posts()) {
                             $the_query->the_post();
                             $the_id = get_the_ID();
-                            //echo get_the_title().'<br>';
                             $start = get_post_meta($the_id,'_EventStartDate',true);
                             $end = get_post_meta($the_id,'_EventEndDate',true);
                             $hours = ( strtotime($end) - strtotime($start) ) / 60 / 60;
                             $total += $hours;
-                            //print_r(get_post_meta(get_the_ID()));
+                            //add total to sub category totals
+                            $terms = get_the_terms( $the_id, 'tribe_events_cat');
+                            if(is_array($terms)) {
+                                foreach($terms as $term) {
+                                    ${$term->slug} += $hours;
+                                }
+                            }
                         }
                         $accrued = number_format($total * $rate,2);
                         $annual += ($total * $rate);
                         echo '<div>'.$client_name.'</div>';
-                        echo '<div>$'.$accrued.'</div>';
+                        $children = '';
+                        if(is_array($access)) {
+                            foreach($access as $access_item) {
+                                $term = get_term_by('name',$access_item,'tribe_events_cat');
+                                if(${$term->slug} > 0) {
+                                    $has_children = true;
+                                    $children .= '<div class="sub-item">'.$term->name.'</div>';
+                                    $children .= '<div>$'.number_format(${$term->slug} * $rate,2).'</div>';
+                                }
+                            }
+                        }
+                        if(!$has_children) {
+                            echo '<div>$'.$accrued.'</div>';
+                        } else {
+                            echo '<div></div>';
+                            echo $children;
+                        }
                     } 
                     wp_reset_postdata();    
                 } 
