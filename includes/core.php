@@ -574,10 +574,11 @@ function timetracker_admin_css() {
 add_action('wp_dashboard_setup', 'cm_custom_dashboard_widgets');
 function cm_custom_dashboard_widgets() {
     global $wp_meta_boxes;
-    wp_add_dashboard_widget('cm_summary_widget', 'Client Manager Annual Billing Summary', 'cm_summary_callback');
+    wp_add_dashboard_widget('cm_annual_summary_widget', 'Client Manager Annual Billing Summary', 'cm_annual_summary_callback');
+    wp_add_dashboard_widget('cm_monthly_summary_widget', 'Client Manager Current Month Billing Summary', 'cm_monthly_summary_callback');
 }
  
-function cm_summary_callback() {
+function cm_monthly_summary_callback() {
     $client_args = array(
         'post_type' => 'clients',
         'posts_per_page' => -1,
@@ -590,7 +591,74 @@ function cm_summary_callback() {
         echo '<div class="client-summary-widget">';
             while($client_query->have_posts()) {
                 $client_query->the_post();
-                echo '<div>'.get_the_title().'</div>';
+                $client_name = get_the_title();
+                $post_id = get_the_ID();
+                $access = get_post_meta($post_id,'client_category_access');
+                $rate = get_post_meta($post_id,'client_rate', true);
+                if(!empty($access)) {
+                    $args = array(
+                        'post_type' => 'tribe_events',
+                        'posts_per_page' => -1,
+                        'tax_query' => array(
+                            array (
+                                'taxonomy' => 'tribe_events_cat',
+                                'field' => 'name',
+                                'terms' => $access,
+                            )
+                        ),
+                        'meta_query' => array(
+                            array(
+                                'key' => '_EventStartDate',
+                                'value' =>  date('Y-m-d 00:00:00',strtotime(date('Y-m-01'))), //this month date('Y-m-01'); //this yeat date('Y-m-d 00:00:00',date("Y"))
+                                'compare' => '>',
+                            )
+                        )
+                    );
+                    $the_query = new WP_Query($args);
+                    if($the_query->have_posts()) {
+                        $count = $the_query->found_posts;
+                        $total = 0;
+                        while($the_query->have_posts()) {
+                            $the_query->the_post();
+                            $the_id = get_the_ID();
+                            //echo get_the_title().'<br>';
+                            $start = get_post_meta($the_id,'_EventStartDate',true);
+                            $end = get_post_meta($the_id,'_EventEndDate',true);
+                            $hours = ( strtotime($end) - strtotime($start) ) / 60 / 60;
+                            $total += $hours;
+                            //print_r(get_post_meta(get_the_ID()));
+                        }
+                        $accrued = number_format($total * $rate,2);
+                        $annual += ($total * $rate);
+                        echo '<div>'.$client_name.'</div>';
+                        echo '<div>$'.$accrued.'</div>';
+                    } 
+                    wp_reset_postdata();    
+                } 
+            }
+            echo '<div class="total">Total</div><div class="total">$'.number_format($annual,2).'</div>';
+        echo '</div>';
+    } else {
+        echo '<p><a href="'.get_bloginfo('url').'/wp-admin/post-new.php?post_type=clients">Add your first client</a> to start tracking hours.</p>';
+    }
+    wp_reset_postdata();
+}
+
+
+function cm_annual_summary_callback() {
+    $client_args = array(
+        'post_type' => 'clients',
+        'posts_per_page' => -1,
+        'orderby' => 'menu_order',
+        'order' => 'ASC'
+    );
+    $client_query = new WP_Query($client_args);
+    if($client_query->have_posts()) {
+        $annual = 0;
+        echo '<div class="client-summary-widget">';
+            while($client_query->have_posts()) {
+                $client_query->the_post();
+                $client_name = get_the_title();
                 $post_id = get_the_ID();
                 $access = get_post_meta($post_id,'client_category_access');
                 $rate = get_post_meta($post_id,'client_rate', true);
@@ -629,14 +697,11 @@ function cm_summary_callback() {
                         }
                         $accrued = number_format($total * $rate,2);
                         $annual += ($total * $rate);
+                        echo '<div>'.$client_name.'</div>';
                         echo '<div>$'.$accrued.'</div>';
-                    } else {
-                        echo '<div>$0.00</div>';
                     }
                     wp_reset_postdata();    
-                } else {
-                    echo '<div>$0.00</div>';
-                }
+                } 
             }
             echo '<div class="total">Total</div><div class="total">$'.number_format($annual,2).'</div>';
         echo '</div>';
