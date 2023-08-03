@@ -621,7 +621,8 @@ function cm_monthly_summary_callback() {
                         if(is_array($access)) {
                             foreach($access as $access_item) {
                                 $term = get_term_by('name',$access_item,'tribe_events_cat');
-                                ${$term->slug} = 0;
+                                $slug = str_replace('-','',$term->slug);
+                                ${$slug} = 0;
                             }
                         }
                         $count = $the_query->found_posts;
@@ -637,7 +638,8 @@ function cm_monthly_summary_callback() {
                             $terms = get_the_terms( $the_id, 'tribe_events_cat');
                             if(is_array($terms)) {
                                 foreach($terms as $term) {
-                                    ${$term->slug} += $hours;
+                                    $slug = str_replace('-','',$term->slug);
+                                    ${$slug} += $hours;
                                 }
                             }
                         }
@@ -646,12 +648,16 @@ function cm_monthly_summary_callback() {
                         echo '<div>'.$client_name.'</div>';
                         $children = '';
                         if(is_array($access)) {
-                            foreach($access as $access_item) {
-                                $term = get_term_by('name',$access_item,'tribe_events_cat');
-                                if(${$term->slug} > 0) {
-                                    $has_children = true;
-                                    $children .= '<div class="sub-item">'.$term->name.'</div>';
-                                    $children .= '<div>$'.number_format(${$term->slug} * $rate,2).'</div>';
+                            if(count($access) > 1) {
+                                //This client has more than one child, add line items
+                                foreach($access as $access_item) {
+                                    $term = get_term_by('name',$access_item,'tribe_events_cat');
+                                    $slug = str_replace('-','',$term->slug);
+                                    if(${$slug} > 0) {
+                                        $has_children = true;
+                                        $children .= '<div class="sub-item">'.$term->name.'</div>';
+                                        $children .= '<div>$'.number_format(${$slug} * $rate,2).'</div>';
+                                    }
                                 }
                             }
                         }
