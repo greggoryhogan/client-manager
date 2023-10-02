@@ -675,6 +675,9 @@ function cm_monthly_summary_callback() {
                         wp_reset_postdata();    
                     } 
                 }
+                if($annual == 0) {
+                    echo '<div><em>No time has been logged.</em></div><div>&nbsp;</div>';
+                }
                 echo '<div class="total">Total</div><div class="total">$'.number_format($annual,2).'</div>';
             echo '</div>';
         } else {
