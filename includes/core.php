@@ -580,6 +580,9 @@ function cm_custom_dashboard_widgets() {
 }
  
 function cm_monthly_summary_callback() {
+    $date = new DateTime("now", new DateTimeZone(wp_timezone_string()) );
+    //$today = $date->format('Y-m-01 00:00:00');
+    $today = $date->format('Y-m-01 00:00:00');
     $summary_transient = get_transient('cm_monthly_summary');
     $summary_transient = false;
     if($summary_transient === false) {
@@ -615,8 +618,8 @@ function cm_monthly_summary_callback() {
                             'meta_query' => array(
                                 array(
                                     'key' => '_EventStartDate',
-                                    'value' =>  date('Y-m-d 00:00:00',strtotime(date('Y-m-01'))), //this month date('Y-m-01'); //this yeat date('Y-m-d 00:00:00',date("Y"))
-                                    'compare' => '>',
+                                    'value' =>  $today,
+                                    'compare' => '>=',
                                 )
                             )
                         );
