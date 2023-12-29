@@ -49,7 +49,7 @@ function updateTimeLog(state) {
     var rate = 0;
     jQuery.each(clients, function (index, value) {
         //console.log(value);
-        jQuery('[data-category='+value+']').each(function() {
+        jQuery('[data-category="'+value+'"]').each(function() {
             jQuery(this).parent().addClass('has-access');
         });
         jQuery('#allhours .grid').each(function() {

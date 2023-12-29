@@ -71,7 +71,7 @@ function show_cm_hours( $file, $name, $template ) {
                 var total = 0;
                 var notes = '';
                 var rate = 0;
-                jQuery('[data-category='+val+']').each(function() {
+                jQuery('[data-category="'+val+'"]').each(function() {
                     var time = parseFloat(jQuery(this).find('span.hours').text());
                     total += time;
                     totalTime += time;

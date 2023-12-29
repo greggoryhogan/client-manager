@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Client Manager
 Description:  Manage clients and track hours via the capability of The Events Calendar
-Version:	  1.0.10
+Version:	  1.0.11
 Author:		  Gregg Hogan
 Author URI:   https://mynameisgregg.com
 License:      GPL2
@@ -21,10 +21,15 @@ if(!defined('CM_PLUGIN_URL')) {
 
 add_action( 'wp_enqueue_scripts', 'my_theme_enqueue_styles' );
 function my_theme_enqueue_styles() {
-    $plugin_data = get_file_data(__FILE__, [
+    /*$plugin_data = get_file_data(__FILE__, [
         'Version' => 'Version',
         'TextDomain' => 'cm-plugin'
-    ], 'plugin');
+    ], 'plugin');*/
+
+    if( ! function_exists('get_plugin_data') ){
+		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+	}
+	$plugin_data = get_plugin_data( __FILE__ );
     
     $plugin_version = $plugin_data['Version'];
     wp_enqueue_style( 'cm-plugin', CM_PLUGIN_URL . '/css/client-manager.css',array(), $plugin_version);
