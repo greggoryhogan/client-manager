@@ -253,7 +253,7 @@ function client_notes_from_hour_log() {
         while($the_query->have_posts()) {
             $the_query->the_post();
             $post_id = get_the_ID();
-            echo '<p><strong>Client:</strong> '.get_the_title().'</p>';
+            echo '<p><strong>Client:</strong> <a href="'.get_edit_post_link().'" target="_blank">'.get_the_title().'</a></p>';
             $client_notes = get_post_meta($post_id,'client_notes',true);
             echo '<p><strong>Notes:</strong><br>'.$client_notes.'</p>';
             $rate = get_post_meta($post_id,'client_rate', true);
