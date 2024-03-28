@@ -84,10 +84,10 @@ function show_cm_hours( $file, $name, $template ) {
                 } 
                 var lineitem = parseInt(rate) * total;
                 totalcost += lineitem;
-                jQuery('#allhours').append('<div class="grid"><div class="title" data-client="'+val+'" data-rate="'+rate+'">'+val+'<div class="details">'+notes+'</div></div><div><span class="hours">'+total+'</span> '+time+', '+formatter.format(lineitem)+'<div></div>');
+                jQuery('#allhours').append('<div class="grid"><div class="title" data-client="'+val+'" data-rate="'+rate+'">'+val+'<div class="details">'+notes+'</div></div><div><span class="hours">'+total+'</span> '+time+'<div></div>'); //, '+formatter.format(lineitem)+'
             }
         }); 
-        jQuery('#allhours').append('<div class="grid total"><div>Total Time</div><div>'+totalTime+' hours, '+formatter.format(totalcost)+'<div></div>');
+        jQuery('#allhours').append('<div class="grid total"><div>Total Time</div><div>'+totalTime+' hours<div></div>'); //, '+formatter.format(totalcost)+'
 
         if(jQuery('#accountfound').length) {
             updateTimeLog('existing');
@@ -216,6 +216,13 @@ function time_tracker_register_meta_boxes() {
     add_meta_box( 'time-tracker-clients-summary', __( 'Client Earnings Summary', 'time_tracker' ), 'time_tracker_display_client_summary', 'clients' );
     add_meta_box( 'time-tracker-monthly-summary', __( 'Current Month', 'time_tracker' ), 'time_tracker_display_month_summary', 'clients');
     add_meta_box( 'time-tracker-client_notes', __( 'Client Notes', 'time_tracker' ), 'time_tracker_display_client_notes', 'clients');
+    global $post;
+    if(isset($post)) {
+        $client_category = get_the_terms($post->ID, 'tribe_events_cat');
+        if(!empty($client_category)) {
+            add_meta_box( 'time-tracker-client_notes_from_hour_log', __( 'Client Reference', 'time_tracker' ), 'client_notes_from_hour_log', 'tribe_events', 'side');
+        }
+    }
 }
 add_action( 'add_meta_boxes', 'time_tracker_register_meta_boxes' );
 
@@ -223,6 +230,78 @@ function time_tracker_display_client_notes( $post ) {
     $post_id = $post->ID;
     $client_notes = get_post_meta($post_id,'client_notes',true);
     echo '<textarea style="width: 100%;border:none;" rows="10" name="client_notes">'.$client_notes.'</textarea>';
+}
+
+function client_notes_from_hour_log() {
+    global $post;
+    $client_category = get_the_terms($post->ID, 'tribe_events_cat');
+    $client_cat_id = $client_category[0]->name;
+    $args = array(
+        'post_type' => 'clients',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+            array(
+                'key' => 'client_category_access',
+                'value' =>  $client_cat_id,
+                'compare' => '='
+            )
+        )
+    );
+    //print_r($args);
+    $the_query = new WP_Query($args);
+    if($the_query->have_posts()) {
+        while($the_query->have_posts()) {
+            $the_query->the_post();
+            $post_id = get_the_ID();
+            echo '<p><strong>Client:</strong> '.get_the_title().'</p>';
+            $client_notes = get_post_meta($post_id,'client_notes',true);
+            echo '<p><strong>Notes:</strong><br>'.$client_notes.'</p>';
+            $rate = get_post_meta($post_id,'client_rate', true);
+            $client_args = array(
+                'post_type' => 'tribe_events',
+                'posts_per_page' => -1,
+                'tax_query' => array(
+                    array (
+                        'taxonomy' => 'tribe_events_cat',
+                        'field' => 'name',
+                        'terms' => $client_cat_id,
+                    )
+                ),
+                'meta_query' => array(
+                    array(
+                        'key' => '_EventStartDate',
+                        'value' =>  date('Y-m-d 00:00:00',strtotime(date('Y-m-01'))), //this month date('Y-m-01'); //this yeat date('Y-m-d 00:00:00',date("Y"))
+                        'compare' => '>',
+                    )
+                )
+            );
+            echo '<p><strong>'.$client_cat_id.' hours this month:</strong> ';
+            $client_query = new WP_Query($client_args);
+            if($client_query->have_posts()) {
+                $total = 0;
+                while($client_query->have_posts()) {
+                    $client_query->the_post();
+                    $the_id = get_the_ID();
+                    //echo get_the_title().'<br>';
+                    $start = get_post_meta($the_id,'_EventStartDate',true);
+                    $end = get_post_meta($the_id,'_EventEndDate',true);
+                    $hours = ( strtotime($end) - strtotime($start) ) / 60 / 60;
+                    $total += $hours;
+                    //print_r(get_post_meta(get_the_ID()));
+                }
+                $accrued = number_format($total * $rate,2);
+                echo $total .' hours, $'.$accrued;
+            } else {
+                echo '0 hours';
+            }
+            echo '</p>';
+        }
+    } else {
+        echo 'could not find client';
+    }
+    wp_reset_postdata();
+    //$terms = get_terms('tribe_events_cat', array('hide_empty' => 0));
+    //$access = get_post_meta($post_id,'client_category_access');
 }
 
 function time_tracker_display_month_summary( $post ) {

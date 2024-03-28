@@ -82,7 +82,7 @@ function updateTimeLog(state) {
         //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
         });
 
-    jQuery('#allhours').append('<div class="grid total"><div>Total Time</div><div>'+totalTime+' hours, '+formatter.format(totalcost)+'<div></div>');
+    jQuery('#allhours').append('<div class="grid total"><div>Total Time</div><div>'+totalTime+' hours<div></div>'); //, '+formatter.format(totalcost)+'
     jQuery('#allhours').append('<p class="note">Tip: When reviewing total hours for each client, click on the client name to get more detailed information for hours logged.</p>');
     jQuery('body').addClass('has-access');
     if(state == 'new') {
