@@ -248,12 +248,12 @@ function client_notes_from_hour_log() {
         )
     );
     //print_r($args);
-    $the_query = new WP_Query($args);
-    if($the_query->have_posts()) {
-        while($the_query->have_posts()) {
-            $the_query->the_post();
-            $post_id = get_the_ID();
-            echo '<p><strong>Client:</strong> <a href="'.get_edit_post_link().'" target="_blank">'.get_the_title().'</a></p>';
+    $clients = get_posts($args);
+    if(!empty($clients)) {
+        foreach($clients as $client) {
+            //print_r($client);
+            $post_id = $client->ID;
+            echo '<p><strong>Client:</strong> <a href="'.get_edit_post_link($post_id).'" target="_blank">'.get_the_title($post_id).'</a></p>';
             $client_notes = get_post_meta($post_id,'client_notes',true);
             echo '<p><strong>Notes:</strong><br>'.$client_notes.'</p>';
             $rate = get_post_meta($post_id,'client_rate', true);
@@ -276,12 +276,11 @@ function client_notes_from_hour_log() {
                 )
             );
             echo '<p><strong>'.$client_cat_id.' hours this month:</strong> ';
-            $client_query = new WP_Query($client_args);
-            if($client_query->have_posts()) {
+            $clients_query = get_posts($client_args);
+            if(!empty($clients_query)) {
                 $total = 0;
-                while($client_query->have_posts()) {
-                    $client_query->the_post();
-                    $the_id = get_the_ID();
+                foreach($clients_query as $client_query) {
+                    $the_id = $client_query->ID;
                     //echo get_the_title().'<br>';
                     $start = get_post_meta($the_id,'_EventStartDate',true);
                     $end = get_post_meta($the_id,'_EventEndDate',true);
@@ -299,7 +298,7 @@ function client_notes_from_hour_log() {
     } else {
         echo 'could not find client';
     }
-    wp_reset_postdata();
+    
     //$terms = get_terms('tribe_events_cat', array('hide_empty' => 0));
     //$access = get_post_meta($post_id,'client_category_access');
 }
