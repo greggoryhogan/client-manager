@@ -438,9 +438,44 @@ function time_tracker_display_client_summary( $post ) {
                     //print_r(get_post_meta(get_the_ID()));
                 }
                 $accrued = number_format($total * $rate,2);
-                echo '<p style="margin-top: 0;">Year to date: '.$total .' hours, $'.$accrued.' over '.$count.' days.</p>';
+                echo '<p style="margin-top: 0; margin-bottom: 0;">Year to date: '.$total .' hours, $'.$accrued.' over '.$count.' days.</p>';
             } else {
-                echo '<p style="margin-top: 0;">Year to date: 0.</p>';
+                echo '<p style="margin-top: 0;margin-bottom: 0;">Year to date: 0.</p>';
+            }
+            wp_reset_query();
+
+            //previous year
+
+            
+            $args = array(
+                'post_type' => 'tribe_events',
+                'posts_per_page' => -1,
+                'tax_query' => array(
+                    array (
+                        'taxonomy' => 'tribe_events_cat',
+                        'field' => 'name',
+                        'terms' => $client,
+                    )
+                ),
+            );
+            $the_query = new WP_Query($args);
+            if($the_query->have_posts()) {
+                $count = $the_query->found_posts;
+                $total = 0;
+                while($the_query->have_posts()) {
+                    $the_query->the_post();
+                    $the_id = get_the_ID();
+                    //echo get_the_title().'<br>';
+                    $start = get_post_meta($the_id,'_EventStartDate',true);
+                    $end = get_post_meta($the_id,'_EventEndDate',true);
+                    $hours = ( strtotime($end) - strtotime($start) ) / 60 / 60;
+                    $total += $hours;
+                    //print_r(get_post_meta(get_the_ID()));
+                }
+                $accrued = number_format($total * $rate,2);
+                echo '<p style="margin-top: 0;">Lifetime: '.$total .' hours, $'.$accrued.' over '.$count.' days.</p>';
+            } else {
+                echo '<p style="margin-top: 0;">Lifetime: 0.</p>';
             }
             wp_reset_query();
         }
