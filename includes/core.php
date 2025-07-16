@@ -34,9 +34,13 @@ add_filter('body_class', 'my_plugin_body_class');
 add_filter( 'tribe_template_html:events/v2/components/subscribe-links/list', '__return_false' );
 
 
-add_action( 'tribe_template_after_include:events/v2/month/calendar-body', 'show_cm_hours',10,3);
+//add_action( 'tribe_template_after_include:events/v2/month/calendar-body', 'show_cm_hours',10,3);
+add_filter('tribe_events_after_html','show_cm_hours',10,2);
 //add_action( 'tribe_template_after_include:events/v2/list/calendar-body', 'show_cm_hours',10,3);
-function show_cm_hours( $file, $name, $template ) {
+//function show_cm_hours( $file, $name, $template ) {
+function show_cm_hours( $after, $view ) {
+    //echo '<pre>'.print_r($view,true).'</pre>';
+    ob_start();
     echo '<div id="allhours"></div>'; ?>
     <script>
         // Create our number formatter.
@@ -94,6 +98,8 @@ function show_cm_hours( $file, $name, $template ) {
         }
 
     </script><?php
+    $after .= ob_get_clean();
+    return $after;
 }
 
 add_action( 'tribe_template_before_include:events/v2/components/events-bar/views', function( $file, $name, $template ) {
@@ -276,6 +282,50 @@ function client_notes_from_hour_log() {
                 )
             );
             echo '<p><strong>'.$client_cat_id.' hours this month:</strong> ';
+            $clients_query = get_posts($client_args);
+            if(!empty($clients_query)) {
+                $total = 0;
+                foreach($clients_query as $client_query) {
+                    $the_id = $client_query->ID;
+                    //echo get_the_title().'<br>';
+                    $start = get_post_meta($the_id,'_EventStartDate',true);
+                    $end = get_post_meta($the_id,'_EventEndDate',true);
+                    $hours = ( strtotime($end) - strtotime($start) ) / 60 / 60;
+                    $total += $hours;
+                    //print_r(get_post_meta(get_the_ID()));
+                }
+                $accrued = number_format($total * $rate,2);
+                echo $total .' hours, $'.$accrued;
+            } else {
+                echo '0 hours';
+            }
+            echo '</p>';
+
+            $client_args = array(
+                'post_type' => 'tribe_events',
+                'posts_per_page' => -1,
+                'tax_query' => array(
+                    array (
+                        'taxonomy' => 'tribe_events_cat',
+                        'field' => 'name',
+                        'terms' => $client_cat_id,
+                    )
+                ),
+                'meta_query' => array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => '_EventStartDate',
+                        'value' => date('Y-m-d 23:59:59', strtotime('last day of last month')),
+                        'compare' => '<=',
+                    ),
+                    array(
+                        'key' => '_EventEndDate',
+                        'value' => date('Y-m-d 00:00:00', strtotime('first day of last month')),
+                        'compare' => '>=',
+                    )
+                )
+            );
+            echo '<p><strong>'.$client_cat_id.' hours last month:</strong> ';
             $clients_query = get_posts($client_args);
             if(!empty($clients_query)) {
                 $total = 0;
@@ -543,7 +593,7 @@ function save_time_tracker_client_meta( $post_id ) {
     }
 
     if(isset( $_POST['client_notes'] )) {
-        update_post_meta( $post_id, 'client_notes', sanitize_text_field($_POST['client_notes'] ));
+        update_post_meta( $post_id, 'client_notes', sanitize_textarea_field($_POST['client_notes'] ));
     } 
 
      

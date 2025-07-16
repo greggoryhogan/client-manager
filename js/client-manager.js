@@ -39,53 +39,55 @@ function sendPinData() {
     });
 }
 function updateTimeLog(state) {
-    var access = jQuery('#accountfound').attr('data-access');
-    var clients = access.split(',');
-    jQuery('#allhours .grid').each(function() {
-        //if(!jQuery(this).hasClass('total')) {
-        jQuery(this).addClass('no-access');
-        //}
-    });
-    var rate = 0;
-    jQuery.each(clients, function (index, value) {
-        //console.log(value);
-        jQuery('[data-category="'+value+'"]').each(function() {
-            jQuery(this).parent().addClass('has-access');
-        });
+    if(jQuery('#accountfound').length) {
+        var access = jQuery('#accountfound').attr('data-access');
+        var clients = access.split(',');
         jQuery('#allhours .grid').each(function() {
-            var $this = jQuery(this);
-            var client = jQuery(this).find('.title').attr('data-client');
-            if(client == value) {
-                $this.removeClass('no-access');
-                rate = jQuery(this).find('.title').attr('data-rate');
-            } else {
-                //alert(client + ' '+ value);
-            }
+            //if(!jQuery(this).hasClass('total')) {
+            jQuery(this).addClass('no-access');
+            //}
         });
-       // alert(value);
-    });
-    jQuery('.no-access').remove();
-    jQuery('p.note').remove();
-    var totalTime = 0;
-    
-    jQuery('#allhours .grid').each(function() {
-        var time = parseFloat(jQuery(this).find('span.hours').text());
-        totalTime += time;
-    });
-    var totalcost = parseInt(rate) * totalTime;
-    var formatter = new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-
-        // These options are needed to round to whole numbers if that's what you want.
-        //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
-        //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+        var rate = 0;
+        jQuery.each(clients, function (index, value) {
+            //console.log(value);
+            jQuery('[data-category="'+value+'"]').each(function() {
+                jQuery(this).parent().addClass('has-access');
+            });
+            jQuery('#allhours .grid').each(function() {
+                var $this = jQuery(this);
+                var client = jQuery(this).find('.title').attr('data-client');
+                if(client == value) {
+                    $this.removeClass('no-access');
+                    rate = jQuery(this).find('.title').attr('data-rate');
+                } else {
+                    //alert(client + ' '+ value);
+                }
+            });
+        // alert(value);
         });
+        jQuery('.no-access').remove();
+        jQuery('p.note').remove();
+        var totalTime = 0;
+        
+        jQuery('#allhours .grid').each(function() {
+            var time = parseFloat(jQuery(this).find('span.hours').text());
+            totalTime += time;
+        });
+        var totalcost = parseInt(rate) * totalTime;
+        var formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
 
-    jQuery('#allhours').append('<div class="grid total"><div>Total Time</div><div>'+totalTime+' hours<div></div>'); //, '+formatter.format(totalcost)+'
-    jQuery('#allhours').append('<p class="note">Tip: When reviewing total hours for each client, click on the client name to get more detailed information for hours logged.</p>');
-    jQuery('body').addClass('has-access');
-    if(state == 'new') {
-        jQuery('#client-login').fadeOut();
+            // These options are needed to round to whole numbers if that's what you want.
+            //minimumFractionDigits: 0, // (this suffices for whole numbers, but will print 2500.10 as $2,500.1)
+            //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
+            });
+
+        jQuery('#allhours').append('<div class="grid total"><div>Total Time</div><div>'+totalTime+' hours<div></div>'); //, '+formatter.format(totalcost)+'
+        jQuery('#allhours').append('<p class="note">Tip: When reviewing total hours for each client, click on the client name to get more detailed information for hours logged.</p>');
+        jQuery('body').addClass('has-access');
+        if(state == 'new') {
+            jQuery('#client-login').fadeOut();
+        }
     }
 }
